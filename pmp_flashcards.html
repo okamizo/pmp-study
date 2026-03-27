@@ -452,7 +452,7 @@ function renderStudy(){
   }
   const ci=ST.queue[ST.currentIdx],card=ST.cards[ci];
   ST.answered=false;
-  area.innerHTML=`<div class="card">${card.domain?`<div class="card-tag">${card.domain}</div>`:''}<div class="card-question">${card.q}</div><div class="options" id="opts">${card.options.map((o,i)=>`<button class="option-btn" id="opt-${i}" onclick="selectAnswer(${i},'${card.answer}',${ci})"><span class="option-label">${o.label}</span><span>${o.text}</span></button>`).join('')}</div>${card.explanation?`<div class="explanation" id="expl"><div class="expl-label">Why this answer</div><p>${card.explanation}</p></div>`:''}</div><div class="feedback-row" id="fb-row"><button class="feedback-btn again" onclick="advance(0,${ci})">Again</button><button class="feedback-btn hard" onclick="advance(1,${ci})">Hard</button><button class="feedback-btn good" onclick="advance(2,${ci})">Good</button><button class="feedback-btn easy" onclick="advance(3,${ci})">Easy</button></div>`;
+  area.innerHTML=`<div class="card">${card.chapter?`<div class="card-tag">${card.domain||''} &middot; ${card.chapter}</div>`:card.domain?`<div class="card-tag">${card.domain}</div>`:''}<div class="card-question">${card.q}</div><div class="options" id="opts">${card.options.map((o,i)=>`<button class="option-btn" id="opt-${i}" onclick="selectAnswer(${i},'${card.answer}',${ci})"><span class="option-label">${o.label}</span><span>${o.text}</span></button>`).join('')}</div>${card.explanation?`<div class="explanation" id="expl"><div class="expl-label">Why this answer</div><p>${card.explanation}</p></div>`:''}</div><div class="feedback-row" id="fb-row"><button class="feedback-btn again" onclick="advance(0,${ci})">Again</button><button class="feedback-btn hard" onclick="advance(1,${ci})">Hard</button><button class="feedback-btn good" onclick="advance(2,${ci})">Good</button><button class="feedback-btn easy" onclick="advance(3,${ci})">Easy</button></div>`;
 }
 
 function selectAnswer(optIdx,answer,ci){
@@ -491,18 +491,19 @@ function importQuestions(){
     if(!block.trim())return;
     const lines=block.trim().split('\n'),parsed={};let ck=null;
     lines.forEach(line=>{
-      const qM=line.match(/^Q:\s*(.*)/i),aM=line.match(/^([A-D]):\s*(.*)/i),ansM=line.match(/^Answer:\s*([A-D])/i),expM=line.match(/^Explanation:\s*(.*)/i),domM=line.match(/^Domain:\s*(.*)/i);
+      const qM=line.match(/^Q:\s*(.*)/i),aM=line.match(/^([A-D]):\s*(.*)/i),ansM=line.match(/^Answer:\s*([A-D])/i),expM=line.match(/^Explanation:\s*(.*)/i),domM=line.match(/^Domain:\s*(.*)/i),chapM=line.match(/^Chapter:\s*(.*)/i);
       if(qM){parsed.q=qM[1];ck='q'}
       else if(aM){if(!parsed.options)parsed.options=[];parsed.options.push({label:aM[1].toUpperCase(),text:aM[2]});ck=null}
       else if(ansM){parsed.answer=ansM[1].toUpperCase();ck=null}
       else if(expM){parsed.explanation=expM[1];ck='expl'}
       else if(domM){parsed.domain=domM[1];ck=null}
+      else if(chapM){parsed.chapter=chapM[1];ck=null}
       else if(ck==='expl'&&parsed.explanation)parsed.explanation+=' '+line.trim();
       else if(ck==='q'&&parsed.q)parsed.q+=' '+line.trim();
     });
     if(!parsed.q||!parsed.options||parsed.options.length<2||!parsed.answer){errors++;return}
     const exists=ST.cards.some(c=>c.q.trim().toLowerCase()===parsed.q.trim().toLowerCase());
-    if(!exists){ST.cards.push({id:Date.now()+Math.random(),q:parsed.q,options:parsed.options,answer:parsed.answer,explanation:parsed.explanation||null,domain:parsed.domain||'General',interval:0,ef:2.5,reps:0,lapses:0,due:null,seen:false,correct:0});imported++}
+    if(!exists){ST.cards.push({id:Date.now()+Math.random(),q:parsed.q,options:parsed.options,answer:parsed.answer,explanation:parsed.explanation||null,domain:parsed.domain||'General',chapter:parsed.chapter||null,interval:0,ef:2.5,reps:0,lapses:0,due:null,seen:false,correct:0});imported++}
   });
   save();buildQueue();
   if(imported>0){statusEl.textContent=`✓ Imported ${imported} question${imported!==1?'s':''}${errors?` (${errors} skipped)`:''}`;document.getElementById('import-text').value=''}
